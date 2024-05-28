@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.manifold import TSNE
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.cluster import KMeans, AgglomerativeClustering
 
 # ΒΗΜΑ 1ο: Φόρτωση Δεδομένων: Η εφαρμογή θα πρέπει να είναι σε θέση να φορτώνει tabular data (csv)
 def load_data():
@@ -87,8 +91,85 @@ def plot_eda(data):
     sns.boxplot(data=data)
     st.pyplot(plt)
 
+# ΒΗΜΑ 4
+def run_classification(data):
+    st.write("Classification Tab")
+    
+    # Split the data
+    X = data.iloc[:, :-1]
+    y = data.iloc[:, -1]
+    
+    # Check if labels are continuous and convert them to categorical if necessary
+    if y.dtype.kind in 'fc':
+        y = pd.cut(y, bins=5, labels=False)  # Discretize continuous labels into 5 categories
 
+    # Encode labels to ensure they are numeric
+    le = LabelEncoder()
+    y = le.fit_transform(y)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
+    # Standardize the data
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+    
+    # Get user input for k-NN
+    k = st.sidebar.slider("Select k for k-NN", 1, 15, 3)
+    
+    # k-NN Classifier
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    y_pred_knn = knn.predict(X_test)
+    
+    # Random Forest Classifier
+    rf = RandomForestClassifier(random_state=42)
+    rf.fit(X_train, y_train)
+    y_pred_rf = rf.predict(X_test)
+    
+    st.pyplot(fig)
+    
+    # Classification Reports
+    st.write("## Classification Reports")
+    st.write("### k-NN")
+    st.text(classification_report(y_test, y_pred_knn, zero_division=0))
+    
+    st.write("### Random Forest")
+    st.text(classification_report(y_test, y_pred_rf, zero_division=0))
+    
+
+def run_clustering(data):
+    st.write("Clustering Tab")
+    
+    # Split the data
+    X = data.iloc[:, :-1]
+    
+    # Standardize the data
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # Get user input for k-means
+    k = st.sidebar.slider("Select k for k-Means", 2, 10, 3)
+    
+    # k-Means Clustering
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    labels_kmeans = kmeans.fit_predict(X_scaled)
+    
+    # Hierarchical Clustering
+    agg = AgglomerativeClustering(n_clusters=k)
+    labels_agg = agg.fit_predict(X_scaled)
+    
+    # Plot clustering results
+    fig, ax = plt.subplots(1, 2, figsize=(14, 6))
+    
+    sns.scatterplot(x=X_scaled[:, 0], y=X_scaled[:, 1], hue=labels_kmeans, palette='viridis', ax=ax[0])
+    ax[0].set_title('k-Means Clustering')
+    
+    sns.scatterplot(x=X_scaled[:, 0], y=X_scaled[:, 1], hue=labels_agg, palette='viridis', ax=ax[1])
+    ax[1].set_title('Agglomerative Clustering')
+    
+    st.pyplot(fig)
+    
 def main():
     st.title("Application Development for Data Analysis")
 
@@ -110,7 +191,7 @@ def main():
                 return
                 
             # Tabs for different visualizations
-            tab1, tab2 = st.tabs(["T-SNE", "EDA")
+            tab1, tab2,tab3, tab4 = st.tabs(["T-SNE", "EDA","CLASSIFICATION","CLUSTERING")
 
             with tab1:
                 st.header("t-SNE Visualization")
@@ -119,6 +200,14 @@ def main():
             with tab2:
                 st.header("Exploratory Data Analysis")
                 plot_eda(data_clean)
+
+            with tab3:
+                st.header("Classification")
+                run_classification(data_clean)
+                
+            with tab4:
+                st.header("Clustering")
+                run_clustering(data_clean)
 
        else:
             st.error("Invalid data structure. Please upload a dataset with the correct format.")
