@@ -5,7 +5,9 @@ from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.cluster import KMeans, AgglomerativeClusteringfrom sklearn.metrics import accuracy_score, confusion_matrix, classification_report, f1_score, precision_score, recall_score, silhouette_score, davies_bouldin_score
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # ΒΗΜΑ 1ο: Φόρτωση Δεδομένων: Η εφαρμογή θα πρέπει να είναι σε θέση να φορτώνει tabular data (csv)
 def load_data():
@@ -126,6 +128,45 @@ def run_classification(data):
     rf = RandomForestClassifier(random_state=42)
     rf.fit(X_train, y_train)
     y_pred_rf = rf.predict(X_test)
+
+    # Calculate metrics
+    metrics = {
+        "k-NN": {
+            "accuracy": accuracy_score(y_test, y_pred_knn),
+            "f1": f1_score(y_test, y_pred_knn, average='weighted'),
+            "precision": precision_score(y_test, y_pred_knn, average='weighted', zero_division=0),
+            "recall": recall_score(y_test, y_pred_knn, average='weighted')
+        },
+        "Random Forest": {
+            "accuracy": accuracy_score(y_test, y_pred_rf),
+            "f1": f1_score(y_test, y_pred_rf, average='weighted'),
+            "precision": precision_score(y_test, y_pred_rf, average='weighted', zero_division=0),
+            "recall": recall_score(y_test, y_pred_rf, average='weighted')
+        }
+    }
+    
+    # Display metrics
+    st.write("## Performance Metrics")
+    for model, metric in metrics.items():
+        st.write(f"### {model}")
+        st.write(f"Accuracy: {metric['accuracy']:.4f}")
+        st.write(f"F1 Score: {metric['f1']:.4f}")
+        st.write(f"Precision: {metric['precision']:.4f}")
+        st.write(f"Recall: {metric['recall']:.4f}")
+    
+    # Confusion Matrices
+    st.write("## Confusion Matrices")
+    fig, ax = plt.subplots(1, 2, figsize=(14, 6))
+    
+    sns.heatmap(confusion_matrix(y_test, y_pred_knn), annot=True, fmt='d', ax=ax[0])
+    ax[0].set_title('k-NN Confusion Matrix')
+    ax[0].set_xlabel('Predicted')
+    ax[0].set_ylabel('Actual')
+    
+    sns.heatmap(confusion_matrix(y_test, y_pred_rf), annot=True, fmt='d', ax=ax[1])
+    ax[1].set_title('Random Forest Confusion Matrix')
+    ax[1].set_xlabel('Predicted')
+    ax[1].set_ylabel('Actual')
     
     st.pyplot(fig)
     
@@ -136,6 +177,10 @@ def run_classification(data):
     
     st.write("### Random Forest")
     st.text(classification_report(y_test, y_pred_rf, zero_division=0))
+
+    #ΒΗΜΑ 5 Determine the best model
+    best_model = max(metrics, key=lambda x: metrics[x]['f1'])
+    st.write(f"## Best Model: {best_model}")
     
 
 def run_clustering(data):
@@ -158,6 +203,25 @@ def run_clustering(data):
     # Hierarchical Clustering
     agg = AgglomerativeClustering(n_clusters=k)
     labels_agg = agg.fit_predict(X_scaled)
+
+    # Calculate metrics
+    metrics = {
+        "k-Means": {
+            "silhouette": silhouette_score(X_scaled, labels_kmeans),
+            "davies_bouldin": davies_bouldin_score(X_scaled, labels_kmeans)
+        },
+        "Agglomerative Clustering": {
+            "silhouette": silhouette_score(X_scaled, labels_agg),
+            "davies_bouldin": davies_bouldin_score(X_scaled, labels_agg)
+        }
+    }
+
+    # Display metrics
+    st.write("## Performance Metrics")
+    for model, metric in metrics.items():
+        st.write(f"### {model}")
+        st.write(f"Silhouette Score: {metric['silhouette']:.4f}")
+        st.write(f"Davies-Bouldin Score: {metric['davies_bouldin']:.4f}")
     
     # Plot clustering results
     fig, ax = plt.subplots(1, 2, figsize=(14, 6))
@@ -169,6 +233,25 @@ def run_clustering(data):
     ax[1].set_title('Agglomerative Clustering')
     
     st.pyplot(fig)
+
+    #ΒΗΜΑ 5 Determine the best model
+    best_model = max(metrics, key=lambda x: metrics[x]['silhouette'])
+    st.write(f"## Best Model: {best_model}")
+
+#ΒΗΜΑ 6 
+def display_info():
+    st.header("Σχετικά με την Εφαρμογή")
+    st.write("""
+        Αυτή η εφαρμογή αναπτύχθηκε για την ανάλυση δεδομένων με διάφορους αλγόριθμους μηχανικής μάθησης.
+        Παρέχει δυνατότητες όπως:
+        - Φόρτωση και προεπεξεργασία δεδομένων
+        - Οπτικοποίηση δεδομένων σε 2D με χρήση t-SNE
+        - Αναλυτική Εξερεύνηση Δεδομένων (EDA)
+        - Ταξινόμηση δεδομένων με χρήση αλγορίθμων k-NN και Random Forest
+        - Συσταδοποίηση δεδομένων με χρήση αλγορίθμων k-Means και Agglomerative Clustering
+        - Παρουσίαση των αποτελεσμάτων και καθορισμός του καλύτερου μοντέλου βάσει των μετρικών απόδοσης
+    """)
+
     
 def main():
     st.title("Application Development for Data Analysis")
@@ -191,7 +274,7 @@ def main():
                 return
                 
             # Tabs for different visualizations
-            tab1, tab2,tab3, tab4 = st.tabs(["T-SNE", "EDA","CLASSIFICATION","CLUSTERING")
+            tab1, tab2,tab3, tab4, tab5 = st.tabs(["T-SNE", "EDA","CLASSIFICATION","CLUSTERING","INFO"])
 
             with tab1:
                 st.header("t-SNE Visualization")
@@ -209,6 +292,9 @@ def main():
                 st.header("Clustering")
                 run_clustering(data_clean)
 
+            with tab5:
+                st.header("INFO")
+                display_info()
        else:
             st.error("Invalid data structure. Please upload a dataset with the correct format.")
 
