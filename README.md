@@ -3,6 +3,6 @@
 # Ομάδα Ανάπτυξης
 Παλιά Αγγελική-(inf2021170), Κουτλή Ιφιγένεια-(inf2021107), Κουκόση Παρασκευή-Ειρήνη-(inf2021104).
 # Οδηγίες Docker
-Εκτέλεση εντολών: docker build -t <image_name>
-                  docker run -p 8080:8080 <image_name>
+Εκτέλεση εντολών: docker build -t <image_name>, 
+                  docker run -p 8080:8080 <image_name>, 
 Local URL: http://localhost:8501
