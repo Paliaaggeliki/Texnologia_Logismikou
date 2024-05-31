@@ -1,6 +1,6 @@
-FROM python:3.10.7
+FROM python:3.11.9
 
-WORKDIR /Volumes/PALIA/3 ΕΤΟΣ/ΚΟΡΜΟΥ/ΤΕΧΝΟΛΟΓΙΑ ΛΟΓΙΣΜΙΚΟΥ/texnologia/app.py
+WORKDIR C:\Users\user\OneDrive\Έγγραφα\texnologialogismikou\app.py
 
 COPY requirements.txt requirements.txt
 
